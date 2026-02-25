@@ -7,6 +7,8 @@ qt_standard_project_setup()
 
 qt_add_executable(FileCopierCmd
     main.cpp
+    filecopier.h filecopier.cpp
+    CopierBenchmarks.h
 )
 
 target_link_libraries(FileCopierCmd
