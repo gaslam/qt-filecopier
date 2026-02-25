@@ -16,6 +16,9 @@ target_link_libraries(FileCopierCmd
         Qt::Core Qt::Test
 )
 
+target_compile_definitions(FileCopierCmd PRIVATE SOURCE_FILE="C:/Users/gaspa/Music/Find Your Dreams.flac")
+target_compile_definitions(FileCopierCmd PRIVATE DESTINATION_DIR="C:/Users/gaspa/Music/test")
+
 include(GNUInstallDirs)
 
 install(TARGETS FileCopierCmd
