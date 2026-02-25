@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(FileCopierCmd LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Test)
 
 qt_standard_project_setup()
 
@@ -13,7 +13,7 @@ qt_add_executable(FileCopierCmd
 
 target_link_libraries(FileCopierCmd
     PRIVATE
-        Qt::Core
+        Qt::Core Qt::Test
 )
 
 include(GNUInstallDirs)
