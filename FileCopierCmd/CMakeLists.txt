@@ -16,8 +16,16 @@ target_link_libraries(FileCopierCmd
         Qt::Core Qt::Test
 )
 
-target_compile_definitions(FileCopierCmd PRIVATE SOURCE_FILE="C:/Users/gaspa/Music/Find Your Dreams.flac")
-target_compile_definitions(FileCopierCmd PRIVATE DESTINATION_DIR="C:/Users/gaspa/Music/test")
+set(TEST_FILE "Find_Your_Dreams.flac")
+
+add_custom_command(
+        TARGET FileCopierCmd POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_SOURCE_DIR}/${TEST_FILE}"
+                "${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}")
+
+target_compile_definitions(FileCopierCmd PRIVATE SOURCE_FILE="${CMAKE_BINARY_DIR}/${TEST_FILE}")
+target_compile_definitions(FileCopierCmd PRIVATE DESTINATION_DIR="/test")
 
 include(GNUInstallDirs)
 
