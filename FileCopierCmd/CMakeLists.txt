@@ -22,7 +22,7 @@ set(TEST_FILE "Find_Your_Dreams.flac")
 
 add_custom_command(
         TARGET FileCopierCmd POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        COMMAND ${CMAKE_COMMAND} -E copy
                 "${CMAKE_SOURCE_DIR}/${TEST_FILE}"
                 "${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}")
 

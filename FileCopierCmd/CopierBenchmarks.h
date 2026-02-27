@@ -52,7 +52,21 @@ private slots:
     {
         QFileInfo sourceFile{getSourceFile()};
 
-        processThreaded<QtCopyCopier>(sourceFile);
+        processThreaded<QtCopyCopier>(sourceFile,100);
+    }
+
+    void copyWithMappedCopy()
+    {
+        QFileInfo sourceFile{getSourceFile()};
+
+        process<MappedCopier>(sourceFile);
+    }
+
+    void copyWithMappedCopyThreaded()
+    {
+        QFileInfo sourceFile{getSourceFile()};
+
+        processThreaded<MappedCopier>(sourceFile,100);
     }
 
 private:
@@ -60,12 +74,12 @@ private:
     template<typename T,typename = std::enable_if_t<std::is_base_of_v<FileCopier,T>>>
     void processThreaded(QFileInfo& fileSource, size_t files = 100)
     {
-        qInfo() << "Benchmarking 100 files threaded!!";
+        qInfo() << "Benchmarking " + QString::number(files) + " files threaded!!";
         const QString destinationDir{getDestinationDir()};
         const QString dest{QString(destinationDir)+  fileSource.fileName() + "_copy" + "." + fileSource.suffix()};
-
         QList<T> fileCopiers{};
         fileCopiers.reserve(files);
+
         for(size_t i{}; i < files; ++i)
         {
             T fileCopier{};
@@ -75,19 +89,23 @@ private:
             fileCopier.setDestination(dest);
             fileCopiers << fileCopier;
         }
-        QFuture<void> future = QtConcurrent::map(fileCopiers,[&future](T& copier){
-            copier.run(future);
-        });
 
-        QBENCHMARK{
-            {
-                future.waitForFinished();
-            }
-        }
+        QElapsedTimer timer;
+        timer.start();
+
+        QFuture<void> future = QtConcurrent::map(fileCopiers,[](T& copier){
+            copier.run();
+        });
+        future.waitForFinished();
+
+        qint64 elapsed = timer.elapsed(); // nanoseconds
+        qDebug() << "Actual elapsed time threaded:" << elapsed << "ms";
+
 
         foreach(auto& copier, fileCopiers)
         {
-            QFile::remove(copier.Destination());
+            QFileInfo fileInfo{copier.Destination()};
+            QFile::remove(fileInfo.absoluteFilePath());
         }
         return;
     }
@@ -97,21 +115,26 @@ private:
     {
         qInfo() << "Benchmarking file!!";
         const QString destinationDir{getDestinationDir()};
-        const QString dest{QString(destinationDir)+  fileSource.fileName() + "_copy" + "." + fileSource.suffix()};
+        const QString dest{QString(destinationDir)+ "_copy_" +  fileSource.fileName()};
+        QElapsedTimer timer;
+        timer.start();
 
         T fileCopier{};
-        QFuture<void> future = QtConcurrent::run([&fileCopier,&future](){
-            fileCopier.run(future);
-        });
         fileCopier.setSource(fileSource.absoluteFilePath());
         fileCopier.setDestination(dest);
 
-        QBENCHMARK{
-            {
+        // Use QtConcurrent safely: capture by value, not by reference
+        QFuture<void> future = QtConcurrent::run([fileCopier]() mutable {
+            fileCopier.run(); // Pass future internally if your run() supports pause/resume
+        });
 
-                future.waitForFinished();
-            }
-        }
+        // Wait for the operation to finish
+        future.waitForFinished();
+
+
+        qint64 elapsed = timer.nsecsElapsed(); // nanoseconds
+        qDebug() << "Actual elapsed time:" << elapsed / 1e6 << "ms";
+
 
         QFile::remove(dest);
         return;

@@ -2,6 +2,7 @@
 #define FILECOPIER_H
 
 #include <QFile>
+#include <QFileInfo>
 #include <QFuture>
 
 
@@ -13,25 +14,37 @@ public:
 
     // QRunnable interface
 public:
-    virtual void run(QFuture<void>& future) = 0;
+    virtual void run() = 0;
 
-    void setSource(const QString &newSource);
+    void setSource(const QFileInfo &newSource);
+    void setSource(const QString& newSource);
 
-    [[nodiscard]] QString Destination() const;
+    [[nodiscard]] QFileInfo Destination() const;
+    void setDestination(const QFileInfo &newDestination);
     void setDestination(const QString &newDestination);
 
-    [[nodiscard]] QString Source() const;
+    [[nodiscard]] QFileInfo Source() const;
 
 private:
-    QString m_Source{};
-    QString m_Destination{};
+    QFileInfo m_Source{};
+    QFileInfo m_Destination{};
 };
 
 class QtCopyCopier: public FileCopier
 {
 public:
 
-    void run(QFuture<void>& future) override;
+    void run() override;
+};
+
+class MappedCopier: public FileCopier
+{
+public:
+
+    void run() override;
+
+private:
+    qint64 m_ChunkSize{8*1024*1024};
 };
 
 
