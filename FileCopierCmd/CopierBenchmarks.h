@@ -47,7 +47,50 @@ private slots:
         process<QtCopyCopier>(sourceFile);
     }
 
+
+    void copyWithQFileThreaded()
+    {
+        QFileInfo sourceFile{getSourceFile()};
+
+        processThreaded<QtCopyCopier>(sourceFile);
+    }
+
 private:
+
+    template<typename T,typename = std::enable_if_t<std::is_base_of_v<FileCopier,T>>>
+    void processThreaded(QFileInfo& fileSource, size_t files = 100)
+    {
+        qInfo() << "Benchmarking 100 files threaded!!";
+        const QString destinationDir{getDestinationDir()};
+        const QString dest{QString(destinationDir)+  fileSource.fileName() + "_copy" + "." + fileSource.suffix()};
+
+        QList<T> fileCopiers{};
+        fileCopiers.reserve(files);
+        for(size_t i{}; i < files; ++i)
+        {
+            T fileCopier{};
+            const QString dest{QString(destinationDir)+  fileSource.fileName() + "_copy" + QString::number(i) + "." + fileSource.suffix()};
+
+            fileCopier.setSource(fileSource.absoluteFilePath());
+            fileCopier.setDestination(dest);
+            fileCopiers << fileCopier;
+        }
+        QFuture<void> future = QtConcurrent::map(fileCopiers,[&future](T& copier){
+            copier.run(future);
+        });
+
+        QBENCHMARK{
+            {
+                future.waitForFinished();
+            }
+        }
+
+        foreach(auto& copier, fileCopiers)
+        {
+            QFile::remove(copier.Destination());
+        }
+        return;
+    }
 
     template<typename T,typename = std::enable_if_t<std::is_base_of_v<FileCopier,T>>>
     void process(QFileInfo& fileSource)
