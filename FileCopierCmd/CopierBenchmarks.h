@@ -4,7 +4,6 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QObject>
-#include <QBenchmark.h>
 #include <QTest>
 #include <qfuture.h>
 #include <qtestcase.h>
@@ -14,7 +13,7 @@ class CopierBenchmarks : public QObject
 {
     Q_OBJECT
 private slots:
-    void initTestCase(){
+    void checkIfSourceExists(){
 
         const QString sourceFile{getSourceFile()};
         m_Source.setFileName(sourceFile);
@@ -26,9 +25,10 @@ private slots:
         QString sourceNotOpenedMsg{"Source cannot be opened: "};
         sourceNotOpenedMsg += sourceFile;
         QVERIFY2(m_Source.open(QIODevice::ReadOnly),sourceNotOpenedMsg.toStdString().c_str());
+    }
 
-        m_Source.close();
-
+    void checkIfDestinationExists()
+    {
         const QString destinationDir{getDestinationDir()};
 
         m_Destination.setFileName(destinationDir);
@@ -37,7 +37,6 @@ private slots:
         QString destNotOpenedMsg{"Destination cannot be opened: "};
         destNotOpenedMsg += destinationDir;
         QVERIFY2(destinationInfo.dir().exists(),destNotOpenedMsg.toStdString().c_str());
-
     }
 
     void copyWithQFileCopy()
@@ -90,22 +89,20 @@ private:
             fileCopiers << fileCopier;
         }
 
-        QElapsedTimer timer;
-        timer.start();
+        QBENCHMARK_ONCE{
+            QFuture<void> future = QtConcurrent::map(fileCopiers,[](T& copier){
+                copier.run();
+            });
+            future.waitForFinished();
+        }
 
-        QFuture<void> future = QtConcurrent::map(fileCopiers,[](T& copier){
-            copier.run();
-        });
-        future.waitForFinished();
-
-        qint64 elapsed = timer.elapsed(); // nanoseconds
-        qDebug() << "Actual elapsed time threaded:" << elapsed << "ms";
-
+        QVERIFY2(fileSource.exists(),"Source file does not exists anymore!!");
 
         foreach(auto& copier, fileCopiers)
         {
-            QFileInfo fileInfo{copier.Destination()};
-            QFile::remove(fileInfo.absoluteFilePath());
+            const QFileInfo& currDestination{copier.Destination()};
+            QVERIFY2(currDestination.exists(),"Destination folder does not exist anymore!!");
+            QFile::remove(currDestination.absoluteFilePath());
         }
         return;
     }
@@ -116,27 +113,24 @@ private:
         qInfo() << "Benchmarking file!!";
         const QString destinationDir{getDestinationDir()};
         const QString dest{QString(destinationDir)+ "_copy_" +  fileSource.fileName()};
-        QElapsedTimer timer;
-        timer.start();
+        QString uniqueDest = dest + QString::number(QRandomGenerator::global()->generate());
 
         T fileCopier{};
         fileCopier.setSource(fileSource.absoluteFilePath());
-        fileCopier.setDestination(dest);
+        fileCopier.setDestination(uniqueDest);
 
-        // Use QtConcurrent safely: capture by value, not by reference
-        QFuture<void> future = QtConcurrent::run([fileCopier]() mutable {
-            fileCopier.run(); // Pass future internally if your run() supports pause/resume
-        });
+        QBENCHMARK_ONCE{
+            fileCopier.run();
+        }
 
-        // Wait for the operation to finish
-        future.waitForFinished();
+        const auto& source{fileCopier.Source()};
+        QVERIFY2(source.exists(),"Source file does not exists anymore!!");
 
-
-        qint64 elapsed = timer.nsecsElapsed(); // nanoseconds
-        qDebug() << "Actual elapsed time:" << elapsed / 1e6 << "ms";
+        const auto& destination{fileCopier.Destination()};
+        QVERIFY2(destination.exists(),"Destination folder does not exists anymore!!");
 
 
-        QFile::remove(dest);
+        QFile::remove(fileCopier.Destination().absoluteFilePath());
         return;
     }
 
