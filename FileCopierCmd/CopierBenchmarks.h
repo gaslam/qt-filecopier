@@ -19,25 +19,27 @@ private slots:
     void checkIfSourceExists(){
 
         const QString sourceFile{getSourceFile()};
-        m_Source.setFileName(sourceFile);
+        QFile source{};
+        source.setFileName(sourceFile);
         QString sourceNotExistingMsg{"Source does not exist or path is invalid: "};
         sourceNotExistingMsg += sourceFile;
-        QVERIFY2(m_Source.exists(),sourceNotExistingMsg.toStdString().c_str());
+        QVERIFY2(source.exists(),sourceNotExistingMsg.toStdString().c_str());
 
 
         QString sourceNotOpenedMsg{"Source cannot be opened: "};
         sourceNotOpenedMsg += sourceFile;
-        QVERIFY2(m_Source.open(QIODevice::ReadOnly),sourceNotOpenedMsg.toStdString().c_str());
+        QVERIFY2(source.open(QIODevice::ReadOnly),sourceNotOpenedMsg.toStdString().c_str());
     }
 
     //Checks if the destination exists, before the tests start
     void checkIfDestinationExists()
     {
         const QString destinationDir{getDestinationDir()};
+        QFile dest{};
 
-        m_Destination.setFileName(destinationDir);
+        dest.setFileName(destinationDir);
 
-        QFileInfo destinationInfo{m_Destination};
+        QFileInfo destinationInfo{dest};
         QString destNotOpenedMsg{"Destination cannot be opened: "};
         destNotOpenedMsg += destinationDir;
         QVERIFY2(destinationInfo.dir().exists(),destNotOpenedMsg.toStdString().c_str());
@@ -174,9 +176,6 @@ private:
         return QString();
 #endif
     }
-
-    QFile m_Source;
-    QFile m_Destination;
 };
 
 #endif // COPIERBENCHMARKS_H
