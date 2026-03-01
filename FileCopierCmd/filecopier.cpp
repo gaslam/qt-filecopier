@@ -45,11 +45,11 @@ void QtCopyCopier::run()
 
 void MappedCopier::run()
 {
+    //Get source and destination files for QFile
     QFileInfo destination{Destination()};
     QFileInfo source{Source()};
     QFile sourceFile{source.absoluteFilePath()};
     QFile destinationFile{destination.absoluteFilePath()};
-    qint64 pos{};
 
     if(!sourceFile.open(QIODevice::ReadOnly))
     {
@@ -62,20 +62,36 @@ void MappedCopier::run()
         return;
     }
 
-    destinationFile.resize(source.size());
+    const qint64 sourceSize{source.size()};
+
+    //Resize the file. Otherwise errors are thrown.
+    destinationFile.resize(sourceSize);
 
     int actualChunkSize{};
 
-    while(pos < sourceFile.size())
-    {
-actualChunkSize = std::min(m_ChunkSize, source.size() - pos);
-        uchar* src{sourceFile.map(pos,actualChunkSize)};
+    //Indicates the current position of where the bytes should be written
+    //It's always at the end of the written bytes to the file
+    qint64 pos{};
 
+    while(pos < sourceSize)
+    {
+        //Determine the size that needs to be written.
+        //if the remaining bytes left are smaller in size than m_Chunksize, subtract pos from source size
+        //Otherwise, choose the chunksize
+        actualChunkSize = std::min(m_ChunkSize, sourceSize - pos);
+
+        //Map source and destination.
+        //The bytes come from the chunksize starting from the current position
+        uchar* src{sourceFile.map(pos,actualChunkSize)};
         uchar* dest {destinationFile.map(pos, actualChunkSize)};
 
+        //Copy the chunk to the destination
         memcpy(dest,src,actualChunkSize);
+
+        //Release the memory
         sourceFile.unmap(src);
         destinationFile.unmap(dest);
+
         pos += actualChunkSize;
     }
 }

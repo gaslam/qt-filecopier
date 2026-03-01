@@ -11,8 +11,6 @@ class FileCopier
 public:
     FileCopier();
     virtual ~FileCopier() = default;
-
-    // QRunnable interface
 public:
     virtual void run() = 0;
 
@@ -26,6 +24,7 @@ public:
     [[nodiscard]] QFileInfo Source() const;
 
 private:
+    //TODO, just makes this into strings with file paths
     QFileInfo m_Source{};
     QFileInfo m_Destination{};
 };
@@ -44,7 +43,8 @@ public:
     void run() override;
 
 private:
-    qint64 m_ChunkSize{8*1024*1024};
+    //8 MB chunk size
+    static constexpr qint64 m_ChunkSize{8388608};
 };
 
 
