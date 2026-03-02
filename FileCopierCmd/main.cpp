@@ -6,16 +6,16 @@ int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
 
-    const QString startProgramAgainMsg{"Start the program again!!"};
+    const char* startProgramAgainMsg{"Start the program again!!"};
 
     QTextStream qin(stdin);
     QTextStream qout(stdout);
 
     QString source;
-    qout << "Enter the source file you want to copy from!\n(empty input = a default file of 99.5 MB will be used)\n\n " << Qt::flush;
+    qout << "Enter the source file you want to copy from!\n(empty input = a default file of 99.7 MB will be used)\n\n " << Qt::flush;
     source = qin.readLine();
 
-    if(source.isEmpty())
+    if(source.isEmpty() || source.trimmed().isEmpty())
     {
         source = "resource.flac";
         qout << source << " at location: " << QDir::cleanPath(QCoreApplication::applicationDirPath() + "/" + source)<< " will be used.\n\n" << Qt::flush;
@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
 
     const QFileInfo sourceFile{source};
     const QDir sourceDir{sourceFile.dir()};
+
 
     if(!sourceDir.exists() || !sourceFile.isFile())
     {
@@ -33,9 +34,9 @@ int main(int argc, char *argv[])
 
     QString destination;
     qout << "Enter the destination folder you want to copy to!\n(empty value = location of the program itself)\n\n" << Qt::flush;
-        destination = qin.readLine();
+    destination = qin.readLine();
 
-    if(destination.isEmpty())
+    if(destination.isEmpty() || destination.trimmed().isEmpty())
     {
         destination = QCoreApplication::applicationDirPath();
         qout << "Chosen folder: " << destination << "\n\n" << Qt::flush;
@@ -44,19 +45,19 @@ int main(int argc, char *argv[])
 
     if(!destDir.exists())
     {
-        qCritical() << "Destination folder does not exist! Enter a valid source folder.\n Check the value for any spelling mistakes.";
+        qCritical() << "Destination folder does not exist! Enter a valid source folder.\nCheck the value for any spelling mistakes.";
         qCritical() << startProgramAgainMsg;
         return -1;
     }
 
     QString iterationsStr;
-    qout << "For test which require multiple copies. How many should be made?\n\n(default = 100)\n\n" << Qt::flush;
+    qout << "For test which require multiple copies to be made. How many should be made?\n\n(default = 100)\n\n" << Qt::flush;
     iterationsStr = qin.readLine();
 
     //Does not go below 0
     size_t iterations{};
 
-    if(iterationsStr.isEmpty())
+    if(iterationsStr.isEmpty() || iterationsStr.trimmed().isEmpty())
     {
         iterations = 100;
     }
