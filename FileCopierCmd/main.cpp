@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     if(source.isEmpty())
     {
         source = "resource.flac";
-        qout << source << " at location: " << QCoreApplication::applicationDirPath() << source<< " will be used.\n\n" << Qt::flush;
+        qout << source << " at location: " << QDir::cleanPath(QCoreApplication::applicationDirPath() + "/" + source)<< " will be used.\n\n" << Qt::flush;
     }
 
     const QFileInfo sourceFile{source};
