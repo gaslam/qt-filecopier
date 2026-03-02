@@ -67,31 +67,16 @@ void MappedCopier::run()
     //Resize the file. Otherwise errors are thrown.
     destinationFile.resize(sourceSize);
 
-    int actualChunkSize{};
-
-    //Indicates the current position of where the bytes should be written
-    //It's always at the end of the written bytes to the file
-    qint64 pos{};
-
-    while(pos < sourceSize)
+    QByteArray buffer{};
+    uchar* dest {destinationFile.map(0, sourceSize)};
+    int dataRead{};
+    do
     {
-        //Determine the size that needs to be written.
-        //if the remaining bytes left are smaller in size than m_Chunksize, subtract pos from source size
-        //Otherwise, choose the chunksize
-        actualChunkSize = std::min(m_ChunkSize, sourceSize - pos);
+        //Read the chunk from the source file and add it to the destination.
+        //Add the total amount of bytes read to dataRead.
+        dataRead = sourceFile.read(reinterpret_cast<char*>(dest),m_ChunkSize);
+        dest += dataRead;
+    }while(dataRead > 0);
 
-        //Map source and destination.
-        //The bytes come from the chunksize starting from the current position
-        uchar* src{sourceFile.map(pos,actualChunkSize)};
-        uchar* dest {destinationFile.map(pos, actualChunkSize)};
-
-        //Copy the chunk to the destination
-        memcpy(dest,src,actualChunkSize);
-
-        //Release the memory
-        sourceFile.unmap(src);
-        destinationFile.unmap(dest);
-
-        pos += actualChunkSize;
-    }
+    destinationFile.unmap(dest);
 }
