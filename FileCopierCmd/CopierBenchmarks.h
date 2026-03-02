@@ -12,13 +12,21 @@
 class CopierBenchmarks : public QObject
 {
     Q_OBJECT
+
+public:
+    CopierBenchmarks(size_t iterations, const QString& source, const QString& destination) :
+        m_Iterations{iterations},
+        m_SourceFile{source},
+        m_DestDir{destination}
+    {}
 private slots:
+
     //Check if the source exists, before tests can start.
     //Verify that the source exists and is readable.
     //If this fails, the benchmark results would be meaningless.
     void checkIfSourceExists(){
 
-        const QString sourceFile{getSourceFile()};
+        const QString sourceFile{m_SourceFile};
         QFile source{};
         source.setFileName(sourceFile);
         QString sourceNotExistingMsg{"Source does not exist or path is invalid: "};
@@ -34,70 +42,67 @@ private slots:
     //Checks if the destination exists, before the tests start
     void checkIfDestinationExists()
     {
-        const QString destinationDir{getDestinationDir()};
         QFile dest{};
 
-        dest.setFileName(destinationDir);
+        dest.setFileName(m_DestDir);
 
         QFileInfo destinationInfo{dest};
         QString destNotOpenedMsg{"Destination cannot be opened: "};
-        destNotOpenedMsg += destinationDir;
+        destNotOpenedMsg += m_DestDir;
         QVERIFY2(destinationInfo.dir().exists(),destNotOpenedMsg.toStdString().c_str());
     }
 
     //Test process with QFile::copy
     void copyWithQFileCopy()
     {
-        QFileInfo sourceFile{getSourceFile()};
 
-        process<QtCopyCopier>(sourceFile);
+        process<QtCopyCopier>();
     }
 
     //Test processThreaded with QFile::copy
     void copyWithQFileThreaded()
     {
-        QFileInfo sourceFile{getSourceFile()};
 
-        processThreaded<QtCopyCopier>(sourceFile,10);
+        processThreaded<QtCopyCopier>();
     }
 
     //Test process with a memory mapped file
     void copyWithMappedCopy()
     {
-        QFileInfo sourceFile{getSourceFile()};
 
-        process<MappedCopier>(sourceFile);
+        process<MappedCopier>();
     }
 
     //Test processThreaded with memory mapped copies
     void copyWithMappedCopyThreaded()
     {
-        QFileInfo sourceFile{getSourceFile()};
 
-        processThreaded<MappedCopier>(sourceFile,10);
+        processThreaded<MappedCopier>();
     }
 
 private:
 
     //Processes a predetermined amount of files with QtConcurrent
     template<typename T,typename = std::enable_if_t<std::is_base_of_v<FileCopier,T>>>
-    void processThreaded(QFileInfo& fileSource, size_t files = 100)
+    void processThreaded()
     {
-        qInfo() << "Benchmarking " + QString::number(files) + " files threaded!!";
+        qInfo() << "Benchmarking " + QString::number(m_Iterations) + " files threaded!!";
 
         //Get the destination dir and make a full string with the target file
-        const QString destinationDir{getDestinationDir()};
+        const QString destinationDir{m_DestDir};
+        const QFileInfo fileSource{m_SourceFile};
 
         //Initialize the copiers and set there source and destination files.
         QList<T> fileCopiers{};
 
-        fileCopiers.reserve(files);
+        fileCopiers.reserve(m_Iterations);
 
-        for(size_t i{}; i < files; ++i)
+        for(size_t i{}; i < m_Iterations; ++i)
         {
             T fileCopier{};
             //TODO rewrite this with QString args funtion for string interpolation.
-            const QString dest{QString(destinationDir)+  fileSource.fileName() + "_copy" + QString::number(i) + "." + fileSource.suffix()};
+            //Create an unique name for each copy
+            const QString dest{QString(destinationDir)+ "/"+ fileSource.baseName() + "_copy" + QString::number(i) + "." + fileSource.suffix()};
 
             fileCopier.setSource(fileSource.absoluteFilePath());
             fileCopier.setDestination(dest);
@@ -130,13 +135,14 @@ private:
 
     //Processes a single copy of the source file
     template<typename T,typename = std::enable_if_t<std::is_base_of_v<FileCopier,T>>>
-    void process(QFileInfo& fileSource)
+    void process()
     {
         qInfo() << "Benchmarking file!!";
 
+        const QFileInfo fileSource{m_SourceFile};
+
         //Get the destination dir and make a full string with the target file
-        const QString destinationDir{getDestinationDir()};
-        const QString dest{QString(destinationDir)+ "_copy_" +  fileSource.fileName()};
+        const QString dest{m_DestDir + "/_copy_" +  fileSource.fileName()};
 
         //Copier initialization
         T fileCopier{};
@@ -159,23 +165,9 @@ private:
         return;
     }
 
-    //I could not provide any arguments through the QBENCHMARK console app
-    //So I am doing this with CMAKE variables for now
-    inline QString getSourceFile(){
-#ifdef SOURCE_FILE
-        return QString{SOURCE_FILE};
-#endif
-        return "";
-    }
-
-    [[nodiscard]] inline QString getDestinationDir()
-    {
-#ifdef DESTINATION_DIR
-        return QString(DESTINATION_DIR);
-#else
-        return QString();
-#endif
-    }
+    const QString m_SourceFile;
+    const QString m_DestDir;
+    const size_t m_Iterations;
 };
 
 #endif // COPIERBENCHMARKS_H
