@@ -33,12 +33,12 @@ int main(int argc, char *argv[])
     }
 
     QString destination;
-    qout << "Enter the destination folder you want to copy to!\n(empty value = location of the program itself)\n\n" << Qt::flush;
+    qout << "Enter the destination folder you want to copy to!\n(empty value = location of the source file itself)\n\n" << Qt::flush;
     destination = qin.readLine();
 
     if(destination.isEmpty() || destination.trimmed().isEmpty())
     {
-        destination = QCoreApplication::applicationDirPath();
+        destination = sourceDir.absolutePath();
         qout << "Chosen folder: " << destination << "\n\n" << Qt::flush;
     }
     QDir destDir{destination};
