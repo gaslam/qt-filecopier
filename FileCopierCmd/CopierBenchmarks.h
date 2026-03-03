@@ -117,7 +117,7 @@ private:
             //Allocates the threads and runs them
             //I already chose a future to allow for threads to be paused
             QFuture<void> future = QtConcurrent::map(&pool,fileCopiers,[](T& copier){
-                copier.run();
+                QVERIFY(copier.run());
             });
             //wait for the results to be finished
             future.waitForFinished();
@@ -152,7 +152,7 @@ private:
         //Not doing this once will result in inacurrate speeds
         //Is there anything to fix this?
         QBENCHMARK_ONCE{
-            fileCopier.run();
+            QVERIFY(fileCopier.run());
         }
 
 

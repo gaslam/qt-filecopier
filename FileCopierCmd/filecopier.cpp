@@ -35,15 +35,15 @@ void FileCopier::setDestination(const QString& newDestination)
 }
 
 
-void QtCopyCopier::run()
+bool QtCopyCopier::run()
 {
     QFileInfo destination{Destination()};
     QFileInfo source{Source()};
-    QFile::copy(source.absoluteFilePath(),destination.absoluteFilePath());
+    return QFile::copy(source.absoluteFilePath(),destination.absoluteFilePath());
 }
 
 
-void MappedCopier::run()
+bool MappedCopier::run()
 {
     //Get source and destination files for QFile
     QFileInfo destination{Destination()};
@@ -54,12 +54,12 @@ void MappedCopier::run()
     if(!sourceFile.open(QIODevice::ReadOnly))
     {
         qCritical() << sourceFile.errorString();
-        return;
+        return false;
     }
 
     if(!destinationFile.open(QIODevice::ReadWrite)) {
         qCritical() << destinationFile.errorString();
-        return;
+        return false;
     }
 
     const qint64 sourceSize{source.size()};
@@ -79,4 +79,6 @@ void MappedCopier::run()
     }while(dataRead > 0);
 
     destinationFile.unmap(dest);
+    return destinationFile.flush();
+
 }

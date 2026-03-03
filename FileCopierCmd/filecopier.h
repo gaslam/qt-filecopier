@@ -12,7 +12,7 @@ public:
     FileCopier();
     virtual ~FileCopier() = default;
 public:
-    virtual void run() = 0;
+    virtual bool run() = 0;
 
     void setSource(const QFileInfo &newSource);
     void setSource(const QString& newSource);
@@ -33,14 +33,14 @@ class QtCopyCopier: public FileCopier
 {
 public:
 
-    void run() override;
+    bool run() override;
 };
 
 class MappedCopier: public FileCopier
 {
 public:
 
-    void run() override;
+    bool run() override;
 
 private:
     //8 MB chunk size
