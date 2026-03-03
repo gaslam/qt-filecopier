@@ -47,5 +47,14 @@ private:
     static constexpr qint64 m_ChunkSize{8388608};
 };
 
+#ifdef WIN32
+class Win32FileExCopier: public FileCopier
+{
+public:
+
+    bool run() override;
+};
+#endif
+
 
 #endif // FILECOPIER_H

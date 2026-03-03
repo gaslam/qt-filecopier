@@ -66,6 +66,22 @@ private slots:
         processThreaded<QtCopyCopier>();
     }
 
+#ifdef WIN32
+    //Test process with QFile::copy
+    void copyWithCopyFileExWin32()
+    {
+
+        process<Win32FileExCopier>();
+    }
+
+    //Test processThreaded with QFile::copy
+    void copyWithCopyFileExWin32Threaded()
+    {
+
+        processThreaded<Win32FileExCopier>();
+    }
+#endif
+
     //Test process with a memory mapped file
     void copyWithMappedCopy()
     {

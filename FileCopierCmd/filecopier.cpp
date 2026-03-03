@@ -2,6 +2,10 @@
 
 #include <QFile>
 
+#ifdef WIN32
+#include "windows.h"
+#endif
+
 FileCopier::FileCopier() {}
 
 QFileInfo FileCopier::Source() const
@@ -34,13 +38,21 @@ void FileCopier::setDestination(const QString& newDestination)
     m_Destination = QFileInfo(newDestination);
 }
 
-
 bool QtCopyCopier::run()
 {
     QFileInfo destination{Destination()};
     QFileInfo source{Source()};
     return QFile::copy(source.absoluteFilePath(),destination.absoluteFilePath());
 }
+
+#ifdef WIN32
+bool Win32FileExCopier::run()
+{
+    QFileInfo destination{Destination()};
+    QFileInfo source{Source()};
+    return CopyFileExW((LPCWSTR)source.absoluteFilePath().utf16(), (LPCWSTR)destination.absoluteFilePath().utf16(), 0, this, 0, 0);
+}
+#endif
 
 
 bool MappedCopier::run()
