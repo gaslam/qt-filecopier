@@ -17,7 +17,7 @@ public:
     CopierBenchmarks(size_t iterations, const QString& source, const QString& destination) :
         m_Iterations{iterations},
         m_SourceFile{source},
-        m_DestDir{destination}
+        m_DestDir{QDir(destination).path()}
     {}
 private slots:
 
@@ -116,9 +116,9 @@ private:
         for(size_t i{}; i < m_Iterations; ++i)
         {
             T fileCopier{};
-            //TODO rewrite this with QString args funtion for string interpolation.
             //Create an unique name for each copy
-            const QString dest{QString(destinationDir)+ "/"+ fileSource.baseName() + "_copy" + QString::number(i) + "." + fileSource.suffix()};
+            const QString filename{fileSource.baseName() + "_copy" + QString::number(i) };
+            const QString dest{CreateDestinationFullDir(filename ,fileSource.suffix())};
 
             fileCopier.setSource(fileSource.absoluteFilePath());
             fileCopier.setDestination(dest);
@@ -158,7 +158,8 @@ private:
         const QFileInfo fileSource{m_SourceFile};
 
         //Get the destination dir and make a full string with the target file
-        const QString dest{m_DestDir + "/_copy_" +  fileSource.fileName()};
+        const QString fileName{"_copy_" +  fileSource.baseName()};
+        const QString dest{CreateDestinationFullDir(fileName,fileSource.suffix())};
 
         //Copier initialization
         T fileCopier{};
@@ -179,6 +180,11 @@ private:
 
         QFile::remove(destination.absoluteFilePath());
         return;
+    }
+
+    [[nodiscard]]inline QString CreateDestinationFullDir(const QString& filename,const QString& extension)
+    {
+        return QString("%1/%2.%3").arg(m_DestDir,filename,extension);
     }
 
     const QString m_SourceFile;
