@@ -112,12 +112,13 @@ private:
         QList<T> fileCopiers{};
 
         fileCopiers.reserve(m_Iterations);
+        QString testId{QUuid::createUuid().toString(QUuid::WithoutBraces)};
 
         for(size_t i{}; i < m_Iterations; ++i)
         {
             T fileCopier{};
             //Create an unique name for each copy
-            const QString filename{fileSource.baseName() + "_copy" + QString::number(i) };
+            const QString filename{fileSource.baseName() + "_" + testId +"_" + QString::number(i) };
             const QString dest{CreateDestinationFullDir(filename ,fileSource.suffix())};
 
             fileCopier.setSource(fileSource.absoluteFilePath());
@@ -158,7 +159,8 @@ private:
         const QFileInfo fileSource{m_SourceFile};
 
         //Get the destination dir and make a full string with the target file
-        const QString fileName{"_copy_" +  fileSource.baseName()};
+        QString testId{QUuid::createUuid().toString(QUuid::WithoutBraces)};
+        const QString fileName{"_" + testId + "_" +  fileSource.baseName()};
         const QString dest{CreateDestinationFullDir(fileName,fileSource.suffix())};
 
         //Copier initialization
