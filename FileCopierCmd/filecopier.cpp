@@ -50,7 +50,7 @@ bool Win32FileExCopier::run()
 {
     QFileInfo destination{Destination()};
     QFileInfo source{Source()};
-    return CopyFileExW((LPCWSTR)source.absoluteFilePath().utf16(), (LPCWSTR)destination.absoluteFilePath().utf16(), 0, this, 0, 0);
+    return ::CopyFile((wchar_t*)source.absoluteFilePath().utf16(), (wchar_t*)destination.absoluteFilePath().utf16(), true);
 }
 #endif
 
